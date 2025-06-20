@@ -93,13 +93,18 @@ function loadRecords() {
 function updateRecordList() {
   const records = loadRecords();
   const out = records.map((r, i) => {
+    const idx = records.length - i;
     if (r.mode === "A") {
-      return `[${i+1}]\nモード：A\nコース：${courseNames[r.course]}\n順位　：${r.rank}位`;
+      return `[${idx}]
+モード：A\nコース：${courseNames[r.course]}\n順位　：${r.rank}位`;
     } else {
-      return `[${i+1}]\nモード：B\nスタート：${courseNames[r.start]}\nゴール　：${courseNames[r.goal]}\n順位　　：${r.rank}位`;
+      return `[${idx}]
+モード：B\nスタート：${courseNames[r.start]}\nゴール　：${courseNames[r.goal]}\n順位　　：${r.rank}位`;
     }
   });
-  document.getElementById("recordList").innerText = out.join("\n\n");
+  document.getElementById("recordList").innerText = out.reverse().join("
+
+");
 }
 
 function createAverageInputs() {
