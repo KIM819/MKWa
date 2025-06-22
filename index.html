@@ -225,6 +225,22 @@
             border-left: 5px solid #28a745;
         }
 
+        .csv-format-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+
+        .format-example {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
         @media (max-width: 768px) {
             .form-row {
                 flex-direction: column;
@@ -253,11 +269,15 @@
             <div class="mode-selector">
                 <button class="mode-btn active" onclick="switchMode('input')">📝 データ入力</button>
                 <button class="mode-btn" onclick="switchMode('stats')">📊 統計確認</button>
+                <button class="mode-btn" onclick="switchMode('csv')">💾 CSV管理</button>
             </div>
 
             <!-- データ入力セクション -->
             <div id="input-section" class="section">
                 <h2>🎮 レース結果入力</h2>
+                
+      
+                
                 
                 <!-- ゲームモード選択 -->
                 <div class="form-group">
@@ -353,6 +373,60 @@
 
                 <div id="stats-display" class="stats-grid">
                     <!-- 統計データがここに表示されます -->
+                </div>
+            </div>
+
+            <!-- CSV管理セクション -->
+            <div id="csv-section" class="section hidden">
+                <h2>💾 CSV データ管理</h2>
+                
+                <!-- CSVエクスポート -->
+                <div class="form-group">
+                    <h3>📤 データのエクスポート</h3>
+                    <p>現在のデータをCSVファイルとしてダウンロードできます。</p>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <button class="btn" onclick="exportToCSV('A')">Aモードデータをダウンロード</button>
+                        </div>
+                        <div class="form-col">
+                            <button class="btn" onclick="exportToCSV('B')">Bモードデータをダウンロード</button>
+                        </div>
+                        <div class="form-col">
+                            <button class="btn" onclick="exportToCSV('ALL')">全データをダウンロード</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CSVインポート -->
+                <div class="form-group">
+                    <h3>📥 データのインポート</h3>
+                    <p>CSVファイルからデータを読み込みます。既存のデータに追加されます。</p>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>CSVファイルを選択:</label>
+                            <input type="file" id="csvFileInput" accept=".csv" onchange="handleCSVUpload(event)">
+                        </div>
+                        <div class="form-col">
+                            <button class="btn btn-secondary" onclick="downloadSampleCSV()">サンプルCSVをダウンロード</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CSV形式説明 -->
+                <div class="form-group">
+                    <h3>📋 CSV形式について</h3>
+                    <div class="csv-format-info">
+                        <p><strong>CSVファイルの形式:</strong></p>
+                        <div class="format-example">
+                            <p><strong>Aモード:</strong> Mode,Course,CourseName,Rank,Date</p>
+                            <p><strong>Bモード:</strong> Mode,StartCourse,StartCourseName,GoalCourse,GoalCourseName,Rank,Date</p>
+                        </div>
+                        <p><small>※ 日付は自動で現在時刻が設定されます</small></p>
+                    </div>
+                </div>
+
+                <div id="csv-message" class="success-message hidden">
+                    CSV処理が完了しました！
                 </div>
             </div>
         </div>
@@ -474,15 +548,21 @@
             const buttons = document.querySelectorAll('.mode-btn');
             buttons.forEach(btn => btn.classList.remove('active'));
             
+            // すべてのセクションを非表示
+            document.getElementById('input-section').classList.add('hidden');
+            document.getElementById('stats-section').classList.add('hidden');
+            document.getElementById('csv-section').classList.add('hidden');
+            
             if (mode === 'input') {
-                document.querySelector('.mode-btn').classList.add('active');
+                buttons[0].classList.add('active');
                 document.getElementById('input-section').classList.remove('hidden');
-                document.getElementById('stats-section').classList.add('hidden');
-            } else {
-                document.querySelectorAll('.mode-btn')[1].classList.add('active');
-                document.getElementById('input-section').classList.add('hidden');
+            } else if (mode === 'stats') {
+                buttons[1].classList.add('active');
                 document.getElementById('stats-section').classList.remove('hidden');
                 updateStatsCoursesSelect();
+            } else if (mode === 'csv') {
+                buttons[2].classList.add('active');
+                document.getElementById('csv-section').classList.remove('hidden');
             }
         }
 
@@ -667,6 +747,9 @@
             }
         }
 
+
+      
+
         function clearAllData() {
             if (confirm('すべてのデータを削除しますか？この操作は取り消せません。')) {
                 raceData = { A: {}, B: {} };
@@ -674,6 +757,218 @@
                 document.getElementById('stats-display').innerHTML = '';
                 alert('すべてのデータが削除されました。');
             }
+        }
+
+        // CSV機能
+        function exportToCSV(mode) {
+            let csvContent = '';
+            let filename = '';
+            
+            if (mode === 'A') {
+                csvContent = 'Mode,Course,CourseName,Rank,Date\n';
+                filename = 'race_data_A_mode.csv';
+                
+                Object.keys(raceData.A).forEach(courseId => {
+                    const courseName = courseNames[courseId];
+                    raceData.A[courseId].forEach(rank => {
+                        const date = new Date().toISOString().split('T')[0];
+                        csvContent += `A,${courseId},"${courseName}",${rank},${date}\n`;
+                    });
+                });
+            } else if (mode === 'B') {
+                csvContent = 'Mode,StartCourse,StartCourseName,GoalCourse,GoalCourseName,Rank,Date\n';
+                filename = 'race_data_B_mode.csv';
+                
+                Object.keys(raceData.B).forEach(courseKey => {
+                    const [startCourse, goalCourse] = courseKey.split('-');
+                    const startCourseName = courseNames[startCourse];
+                    const goalCourseName = courseNames[goalCourse];
+                    raceData.B[courseKey].forEach(rank => {
+                        const date = new Date().toISOString().split('T')[0];
+                        csvContent += `B,${startCourse},"${startCourseName}",${goalCourse},"${goalCourseName}",${rank},${date}\n`;
+                    });
+                });
+            } else if (mode === 'ALL') {
+                csvContent = 'Mode,Course,CourseName,StartCourse,StartCourseName,GoalCourse,GoalCourseName,Rank,Date\n';
+                filename = 'race_data_all.csv';
+                
+                // Aモードデータ
+                Object.keys(raceData.A).forEach(courseId => {
+                    const courseName = courseNames[courseId];
+                    raceData.A[courseId].forEach(rank => {
+                        const date = new Date().toISOString().split('T')[0];
+                        csvContent += `A,${courseId},"${courseName}",,,,${rank},${date}\n`;
+                    });
+                });
+                
+                // Bモードデータ
+                Object.keys(raceData.B).forEach(courseKey => {
+                    const [startCourse, goalCourse] = courseKey.split('-');
+                    const startCourseName = courseNames[startCourse];
+                    const goalCourseName = courseNames[goalCourse];
+                    raceData.B[courseKey].forEach(rank => {
+                        const date = new Date().toISOString().split('T')[0];
+                        csvContent += `B,,,"${startCourse}","${startCourseName}","${goalCourse}","${goalCourseName}",${rank},${date}\n`;
+                    });
+                });
+            }
+            
+            if (csvContent === '' || csvContent.split('\n').length <= 1) {
+                alert('エクスポートするデータがありません。');
+                return;
+            }
+            
+            downloadCSV(csvContent, filename);
+            showCSVMessage(`${filename} をダウンロードしました。`);
+        }
+
+        function downloadCSV(content, filename) {
+            const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        function downloadSampleCSV() {
+            const sampleContent = 'Mode,Course,CourseName,StartCourse,StartCourseName,GoalCourse,GoalCourseName,Rank,Date\n' +
+                                 'A,1,"アイスビルディング",,,,3,2024-01-15\n' +
+                                 'A,2,"ワリオシップ",,,,1,2024-01-15\n' +
+                                 'B,,,1,"アイスビルディング",2,"ワリオシップ",5,2024-01-15\n' +
+                                 'B,,,2,"ワリオシップ",4,"ロゼッタてんもんだい",2,2024-01-15\n';
+            
+            downloadCSV(sampleContent, 'sample_race_data.csv');
+            showCSVMessage('サンプルCSVファイルをダウンロードしました。');
+        }
+
+        function handleCSVUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    parseCSV(e.target.result);
+                    showCSVMessage('CSVファイルのインポートが完了しました。');
+                    // ファイル入力をクリア
+                    document.getElementById('csvFileInput').value = '';
+                } catch (error) {
+                    alert('CSVファイルの読み込みでエラーが発生しました: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function parseCSV(csvContent) {
+            const lines = csvContent.split('\n');
+            const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+            
+            if (lines.length <= 1) {
+                throw new Error('CSVファイルにデータがありません。');
+            }
+            
+            let importCount = 0;
+            
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                const values = parseCSVLine(line);
+                if (values.length < headers.length) continue;
+                
+                const mode = values[0];
+                const rank = parseInt(values[values.length - 2]); // 最後から2番目が順位
+                
+                if (!mode || !rank || rank < 1 || rank > 24) continue;
+                
+                if (mode === 'A') {
+                    const courseId = values[1];
+                    if (courseId && courseNames[courseId]) {
+                        if (!raceData.A[courseId]) {
+                            raceData.A[courseId] = [];
+                        }
+                        raceData.A[courseId].push(rank);
+                        importCount++;
+                    }
+                } else if (mode === 'B') {
+                    // 全データ形式の場合
+                    if (headers.includes('StartCourse') && headers.includes('GoalCourse')) {
+                        const startIdx = headers.indexOf('StartCourse');
+                        const goalIdx = headers.indexOf('GoalCourse');
+                        const startCourse = values[startIdx].replace(/"/g, '');
+                        const goalCourse = values[goalIdx].replace(/"/g, '');
+                        
+                        if (startCourse && goalCourse && courseNames[startCourse] && courseNames[goalCourse]) {
+                            const courseKey = `${startCourse}-${goalCourse}`;
+                            if (!raceData.B[courseKey]) {
+                                raceData.B[courseKey] = [];
+                            }
+                            raceData.B[courseKey].push(rank);
+                            importCount++;
+                        }
+                    } else {
+                        // Bモード専用形式の場合
+                        const startCourse = values[1];
+                        const goalCourse = values[3];
+                        
+                        if (startCourse && goalCourse && courseNames[startCourse] && courseNames[goalCourse]) {
+                            const courseKey = `${startCourse}-${goalCourse}`;
+                            if (!raceData.B[courseKey]) {
+                                raceData.B[courseKey] = [];
+                            }
+                            raceData.B[courseKey].push(rank);
+                            importCount++;
+                        }
+                    }
+                }
+            }
+            
+            if (importCount === 0) {
+                throw new Error('有効なデータが見つかりませんでした。');
+            }
+            
+            // データを保存
+            localStorage.setItem('raceData', JSON.stringify(raceData));
+            
+            console.log(`${importCount}件のデータをインポートしました。`);
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            
+            result.push(current);
+            return result;
+        }
+
+        function showCSVMessage(message) {
+            const messageElement = document.getElementById('csv-message');
+            messageElement.textContent = message;
+            messageElement.classList.remove('hidden');
+            setTimeout(() => {
+                messageElement.classList.add('hidden');
+            }, 3000);
         }
     </script>
 </body>
