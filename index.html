@@ -345,7 +345,7 @@
                 </div>
             </div>
 
-        <!-- 統計確認セクション -->
+          <!-- 統計確認セクション -->
             <div id="stats-section" class="section hidden">
                 <h2>📊 統計データ</h2>
                 
@@ -391,7 +391,6 @@
                     <!-- 統計データがここに表示されます -->
                 </div>
             </div>
-
                 <div id="stats-display" class="stats-grid">
                     <!-- 統計データがここに表示されます -->
                 </div>
@@ -991,6 +990,66 @@
                 messageElement.classList.add('hidden');
             }, 3000);
         }
+      function displayCombinedStats() {
+    const statsDisplay = document.getElementById("stats-display");
+    statsDisplay.innerHTML = "";
+
+    // --- Aモード統計 ---
+    const selectedA = Array.from(document.getElementById("statsCoursesSelectA").selectedOptions).map(o => o.value);
+    selectedA.slice(0, 3).forEach(courseId => {
+        const data = raceData.A[courseId] || [];
+        const avg = data.length > 0 ? (data.reduce((a, b) => a + b, 0) / data.length).toFixed(2) : "データなし";
+
+        const card = document.createElement("div");
+        card.className = "stat-card";
+        card.innerHTML = `
+            <h3>${courseNames[courseId]}</h3>
+            <div class="value">${avg}</div>
+            <div>平均順位 (${data.length}回)</div>
+        `;
+        statsDisplay.appendChild(card);
+    });
+
+    // おまかせ (Aモード)
+    const excluded = selectedA.map(Number);
+    const other = [];
+    for (let i = 1; i <= 30; i++) {
+        if (!excluded.includes(i) && raceData.A[i] && raceData.A[i].length > 0) {
+            other.push(...raceData.A[i]);
+        }
+    }
+    if (selectedA.length > 0) {
+        const avg = other.length > 0 ? (other.reduce((a, b) => a + b, 0) / other.length).toFixed(2) : "データなし";
+        const card = document.createElement("div");
+        card.className = "stat-card";
+        card.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #feca57 100%)';
+        card.innerHTML = `
+            <h3>おまかせ</h3>
+            <div class="value">${avg}</div>
+            <div>他コース平均順位 (${other.length}回)</div>
+        `;
+        statsDisplay.appendChild(card);
+    }
+
+    // --- Bモード統計 ---
+    const selectedB = Array.from(document.getElementById("statsCoursesSelectB").selectedOptions).map(o => o.value);
+    selectedB.slice(0, 3).forEach(key => {
+        const data = raceData.B[key] || [];
+        const avg = data.length > 0 ? (data.reduce((a, b) => a + b, 0) / data.length).toFixed(2) : "データなし";
+
+        const [start, goal] = key.split("-");
+        const label = `${courseNames[start]} → ${courseNames[goal]}`;
+
+        const card = document.createElement("div");
+        card.className = "stat-card";
+        card.innerHTML = `
+            <h3>${label}</h3>
+            <div class="value">${avg}</div>
+            <div>平均順位 (${data.length}回)</div>
+        `;
+        statsDisplay.appendChild(card);
+    });
+}
     </script>
 </body>
 </html>
