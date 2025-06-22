@@ -345,31 +345,52 @@
                 </div>
             </div>
 
-            <!-- 統計確認セクション -->
+          <!-- 統計確認セクション -->
             <div id="stats-section" class="section hidden">
                 <h2>📊 統計データ</h2>
                 
+                <!-- Aモード選択 -->
                 <div class="form-group">
+                    <h3>🏁 Aモード (単一コース) - 3つまで選択</h3>
                     <div class="form-row">
                         <div class="form-col">
-                            <label>確認モード:</label>
-                            <select id="statsMode" onchange="updateStatsDisplay()">
-                                <option value="A">Aモード</option>
-                                <option value="B">Bモード</option>
-                            </select>
-                        </div>
-                        <div class="form-col">
-                            <label>確認するコース (3つまで):</label>
-                            <select id="statsCoursesSelect" multiple size="5">
+                            <label>Aモードコース選択:</label>
+                            <select id="statsCoursesSelectA" multiple size="4">
                             </select>
                             <small>Ctrlキーを押しながらクリックで複数選択</small>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Bモード選択 -->
+                <div class="form-group">
+                    <h3>🏎️ Bモード (コース間走行) - 3つまで選択</h3>
+                    <div class="form-row">
                         <div class="form-col">
-                            <button class="btn" onclick="displayStats()">統計表示</button>
+                            <label>Bモードコース間選択:</label>
+                            <select id="statsCoursesSelectB" multiple size="4">
+                            </select>
+                            <small>Ctrlキーを押しながらクリックで複数選択</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 操作ボタン -->
+                <div class="form-group">
+                    <div class="form-row">
+                        <div class="form-col">
+                            <button class="btn" onclick="displayCombinedStats()">A・B両モード統計表示</button>
+                        </div>
+                        <div class="form-col">
                             <button class="btn btn-secondary" onclick="clearAllData()">全データクリア</button>
                         </div>
                     </div>
                 </div>
+
+                <div id="stats-display" class="stats-grid">
+                    <!-- 統計データがここに表示されます -->
+                </div>
+            </div>
 
                 <div id="stats-display" class="stats-grid">
                     <!-- 統計データがここに表示されます -->
